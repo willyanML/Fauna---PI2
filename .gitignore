@@ -1,0 +1,60 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+.yarn/cache
+
+# testing & coverage
+/coverage
+
+# next.js build
+/.next/
+/out/
+
+# production
+/build
+
+# misc & OS
+.DS_Store
+Thumbs.db
+*.pem
+
+# debug & logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# local env files
+.env*.local
+.env
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+next-env.d.ts
+
+# IDE & Editor
+.vscode/
+.idea/
+
+# Documentos acadêmicos e relatórios
+*.docx
+*.pdf
+docs/
+
+# Screenshots e capturas de testes locais
+screenshots/
+
+# Markdown (exceto o README.md)
+*.md
+!README.md
+docs/**/*.md
+
+# Python cache & bytecode
+__pycache__/
+*.py[cod]
+*$py.class

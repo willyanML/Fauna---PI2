@@ -1,0 +1,148 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum PapelUsuario {
+  CIDADAO
+  GESTOR_AMBIENTAL
+  ADMINISTRADOR
+}
+
+enum GrupoTaxonomico {
+  MAMIFERO
+  AVE
+  REPTIL
+  ANFIBIO
+  INVERTEBRADO
+  OUTRO
+}
+
+enum StatusConservacao {
+  LC // Menor Preocupação
+  NT // Quase Ameaçada
+  VU // Vulnerável
+  EN // Em Perigo
+  CR // Criticamente em Perigo
+  DD // Dados Deficientes
+}
+
+enum StatusAnimal {
+  SAUDAVEL
+  FILHOTE_ACUADO
+  FERIDO
+  RISCO_IMINENTE
+  CARCACA
+}
+
+enum StatusValidacao {
+  PENDENTE
+  VALIDADO
+  REJEITADO
+  EM_RESGATE
+  CONCLUIDO
+}
+
+model Usuario {
+  id               String               @id @default(uuid())
+  nome             String
+  email            String               @unique
+  senhaHash        String
+  papel            PapelUsuario         @default(CIDADAO)
+  telefone         String?
+  ativo            Boolean              @default(true)
+  criadoEm         DateTime             @default(now())
+  atualizadoEm     DateTime             @updatedAt
+
+  ocorrencias      Ocorrencia[]
+  validacoesFeitas OcorrenciaValidacao[]
+
+  @@map("usuarios")
+}
+
+model Especie {
+  id                     String              @id @default(uuid())
+  nomePopular            String
+  nomeCientifico         String              @unique
+  grupo                  GrupoTaxonomico
+  familia                String?
+  statusConservacao      StatusConservacao   @default(LC)
+  descricao              String              @db.Text
+  habitat                String?
+  orientacoesConvivencia String?             @db.Text
+  fotoReferenciaUrl      String?
+  ameacadaExtincao       Boolean             @default(false)
+  criadoEm               DateTime            @default(now())
+
+  ocorrenciasSugeridas   Ocorrencia[]        @relation("EspecieSugerida")
+  ocorrenciasValidadas   OcorrenciaValidacao[]
+
+  @@index([grupo])
+  @@index([nomePopular])
+  @@map("especies")
+}
+
+model Ocorrencia {
+  id                  String               @id @default(uuid())
+  protocolo           String               @unique // ex: ARA-2026-0001
+  usuarioId           String?
+  usuario             Usuario?             @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+
+  especieSugeridaId   String?
+  especieSugerida     Especie?             @relation("EspecieSugerida", fields: [especieSugeridaId], references: [id])
+
+  latitude            Float
+  longitude           Float
+  precisaoGpsMetros   Float?
+
+  bairroAreaVerde     String?
+  enderecoAproximado  String?
+  statusAnimal        StatusAnimal         @default(SAUDAVEL)
+  quantidade          Int                  @default(1)
+  dataHoraAvistamento DateTime
+  observacoes         String?              @db.Text
+  statusValidacao     StatusValidacao      @default(PENDENTE)
+  coordenadaOfuscada  Boolean              @default(false)
+
+  criadoEm            DateTime             @default(now())
+  atualizadoEm        DateTime             @updatedAt
+
+  midias              OcorrenciaMidia[]
+  validacoes          OcorrenciaValidacao[]
+
+  @@index([statusValidacao])
+  @@index([statusAnimal])
+  @@index([dataHoraAvistamento])
+  @@map("ocorrencias")
+}
+
+model OcorrenciaMidia {
+  id           String     @id @default(uuid())
+  ocorrenciaId String
+  ocorrencia   Ocorrencia @relation(fields: [ocorrenciaId], references: [id], onDelete: Cascade)
+  tipo         String     @default("FOTO") // FOTO ou VIDEO
+  urlOriginal  String
+  urlThumbnail String?
+  tamanhoBytes Int?
+  criadoEm     DateTime   @default(now())
+
+  @@map("ocorrencias_midias")
+}
+
+model OcorrenciaValidacao {
+  id                String      @id @default(uuid())
+  ocorrenciaId      String
+  ocorrencia        Ocorrencia  @relation(fields: [ocorrenciaId], references: [id], onDelete: Cascade)
+  validadorId       String
+  validador         Usuario     @relation(fields: [validadorId], references: [id])
+  especieValidadaId String?
+  especieValidada   Especie?    @relation(fields: [especieValidadaId], references: [id])
+  parecerTecnico    String?     @db.Text
+  validadoEm        DateTime    @default(now())
+
+  @@map("ocorrencias_validacoes")
+}
